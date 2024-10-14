@@ -4,6 +4,13 @@
 #
 ############################################################################################
 
+# This is a fancy way to make de-specialize a call to `displaysize(io::IO)`
+# which is unfortunately invalidated by REPL
+#  (https://github.com/JuliaLang/julia/issues/56080)
+#
+# This makes the call less efficient, but avoids being invalidated by REPL.
+displaysize_(io::IO) = Base.invoke_in_world(Base.tls_world_age(), displaysize, io)::Tuple{Int,Int}
+
 # Low-level function to print the table using the text back end.
 function _print_table_with_text_back_end(
     pinfo::PrintInfo;
@@ -17,7 +24,7 @@ function _print_table_with_text_back_end(
     crop::Symbol = get(pinfo.io, :limit, false) ? :both : :none,
     crop_subheader::Bool = false,
     columns_width::Union{Int, AbstractVector{Int}} = 0,
-    display_size::Tuple{Int, Int} = displaysize(pinfo.io),
+    display_size::Tuple{Int, Int} = displaysize_(pinfo.io),
     equal_columns_width::Bool = false,
     ellipsis_line_skip::Integer = 0,
     highlighters::Union{Highlighter, Tuple} = (),
